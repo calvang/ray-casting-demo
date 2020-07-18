@@ -11,8 +11,8 @@
 #define Pi3 3 * Pi / 2
 #define DegToRad 0.0174533
 
-// player variables (position, change in pos, angle)
-float px, py, pdx, pdy, pa;
+// player variables (position, change in pos, angle, movement speed)
+float px, py, pdx, pdy, pa, ps;
 
 // keys for multicontols
 bool keys[10];
@@ -43,6 +43,27 @@ int map[] = {
     1, 1, 1, 1, 1, 1, 1, 1
 };
 
+// int mapX=16, mapY=16, mapS=8;
+// int map[] = {
+//     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+//     1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+//     1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+//     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+//     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+//     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+//     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+//     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+//     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+//     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+//     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+//     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+//     1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+//     1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+//     1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1,
+//     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+// };
+
+
 float distance(float ax, float ay, float bx, float by, float angle) {
     return sqrt(pow((bx - ax), 2) + pow((by - ay), 2));
 }
@@ -68,12 +89,14 @@ void drawMap2D() {
     }
 }
 
-void drawWalls3D(float finalDist, int rayNum, int wallDetail) {
+void drawWalls3D(float finalDist, int rayNum, int wallDetail, bool shade) {
     float lineHeight = mapS * 320 / finalDist;
     if (lineHeight > 320) {
         lineHeight = 320;
     }
     float lineOffset = 160 - lineHeight / 2;
+    if (shade) glColor3f(0.5, 0.5, 0.9);
+    else glColor3f(0.5, 0.5, 0.7);
     glLineWidth(8);
     glBegin(GL_LINES);
     glVertex2i(rayNum * wallDetail + 530, lineOffset);
@@ -82,6 +105,7 @@ void drawWalls3D(float finalDist, int rayNum, int wallDetail) {
 }
 
 void drawRays2D(int rayNum) {
+    bool shade; // 0 for light, 1 for shade
     int r, mx, my, mp, dof; // depth-of-field, ray multiplier
     float rx, ry, ra, xo, yo, finalDist; // ray pos, ray angle, x-offset, y-offset
     ra = pa - DegToRad * 30;
@@ -184,11 +208,13 @@ void drawRays2D(int rayNum) {
             rx = vx;
             ry = vy;
             finalDist = vDist;
+            shade = true;
             glColor3f(1, 0.9, 0);
         } if (hDist < vDist) {
             rx = hx;
             ry = hy;
             finalDist = hDist;
+            shade = false;
             glColor3f(1, 0.7, 0);
         }
         glLineWidth(2);
@@ -202,7 +228,7 @@ void drawRays2D(int rayNum) {
         if (ca > 2 * Pi) ca -= 2 * Pi; 
         finalDist *= cos(ca);
         // draw 3d walls
-        drawWalls3D(finalDist, r, 1);
+        drawWalls3D(finalDist, r, 1, shade);
         // increment next ray angle
         ra += DegToRad / (rayNum / 60);
         if (ra < 0) ra += 2 * Pi;
@@ -301,8 +327,9 @@ void initDisplay() {
     glClearColor(0.3, 0.3, 0.3, 0);
     gluOrtho2D(0, WIDTH, HEIGHT, 0);
     px=300, py=300;
-    pdx = cos(pa) * 5;
-    pdy = sin(pa) * 5;
+    ps = 1;
+    pdx = cos(pa) * ps;
+    pdy = sin(pa) * ps;
 }
 
 int main(int argc, char* argv[]) {
