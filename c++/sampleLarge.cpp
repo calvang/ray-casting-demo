@@ -17,6 +17,10 @@ float px, py, pdx, pdy, pa, ps;
 // keys for multicontols
 bool keys[10];
 
+// application window dimensions
+const int WIDTH = 1024, HEIGHT = 512;
+
+/* Draw player and directional indicator */
 void drawPlayer() {
     glColor3f(1, 1, 0);
     glPointSize(8);
@@ -31,83 +35,91 @@ void drawPlayer() {
     glEnd();
 }
 
-int mapX=8, mapY=8, mapS=64;
+// X and Y grid sizes and individual blocksize
+int mapX=16, mapY=16, mapS=8;
+// Map grid: 1=obstacle, 0=free space
 int map[] = {
-    1, 1, 1, 1, 1, 1, 1, 1,
-    1, 0, 1, 0, 0, 0, 0, 1,
-    1, 0, 1, 1, 0, 0, 0, 1,
-    1, 0, 0, 0, 0, 0, 0, 1,
-    1, 0, 0, 0, 0, 1, 0, 1,
-    1, 1, 1, 0, 0, 1, 0, 1,
-    1, 0, 0, 0, 0, 0, 0, 1,
-    1, 1, 1, 1, 1, 1, 1, 1
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1,
+    1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1,
+    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+    1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1,
+    1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 1,
+    1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1,
+    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1,
+    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1,
+    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1,
+    1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1,
+    1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1,
+    1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 };
 
-// int mapX=16, mapY=16, mapS=8;
-// int map[] = {
-//     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-//     1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-//     1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-//     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-//     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-//     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-//     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-//     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-//     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-//     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-//     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-//     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-//     1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-//     1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-//     1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1,
-//     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-// };
-
-
+/* Calculate distance */
 float distance(float ax, float ay, float bx, float by, float angle) {
     return sqrt(pow((bx - ax), 2) + pow((by - ay), 2));
 }
 
+/* Draw 2D Demo Sidebar */
+void drawBar2D() {
+    glColor3f(0, 0, 0);
+    glBegin(GL_QUADS);
+    glVertex2i(0, 0);
+
+    glVertex2i(mapS * mapX, 0);
+    glVertex2i(mapS * mapX, HEIGHT);
+    glVertex2i(0, HEIGHT);
+    glEnd();
+}
+
+/* Draw 2D Map Grid for Preview */
 void drawMap2D() {
     int x, y, x0, y0;
+    float gap = 0.2;
     for (y = 0; y < mapY; y++) {
         for (x = 0; x < mapX; x++) {
             if (map[y * mapX + x] == 1) {
-                glColor3f(0.5, 7, 0.5 ); // walls
+                glColor3f(0.5, 7, 0.5);
             } else {
-                glColor3f(0, 0.2, 0); // background
+                glColor3f(0, 0.2, 0);
             }
             x0 = x * mapS;
             y0 = y * mapS;
             glBegin(GL_QUADS);
-            glVertex2i(x0 + 1, y0);
-            glVertex2i(x0 + 1, y0 + mapS - 1);
-            glVertex2i(x0 + mapS - 1, y0 + mapS - 1);
-            glVertex2i(x0 + mapS - 1, y0);
+            glVertex2i(x0 + gap, y0);
+            glVertex2i(x0 + gap, y0 + mapS - gap);
+            glVertex2i(x0 + mapS - gap, y0 + mapS - gap);
+            glVertex2i(x0 + mapS - gap, y0);
             glEnd();
         }
     }
 }
 
+/* Render walls using ray casted values */
 void drawWalls3D(float finalDist, int rayNum, int wallDetail, bool shade) {
-    float lineHeight = mapS * 320 / finalDist;
-    if (lineHeight > 320) {
-        lineHeight = 320;
+    float lineHeight = mapS * HEIGHT / finalDist;
+    if (lineHeight > HEIGHT) {
+        lineHeight = HEIGHT;
     }
-    float lineOffset = 160 - lineHeight / 2;
+    float lineOffset = HEIGHT / 2 - lineHeight / 2;
     if (shade) glColor3f(0.2, 0.2, 0.9);
-    else glColor3f(0.2, 0.2, 0.7);
+    else glColor3f(0.1, 0.1, 0.5);
     glLineWidth(8);
     glBegin(GL_LINES);
-    glVertex2i(rayNum * wallDetail + 530, lineOffset);
-    glVertex2i(rayNum * wallDetail + 530, lineHeight + lineOffset);
+    glVertex2i(rayNum * wallDetail + 129 /*arbitrary alignment val */, lineOffset);
+    glVertex2i(rayNum * wallDetail + 129, lineHeight + lineOffset);
     glEnd();
 }
 
+/* Cast rays and render objects */
 void drawRays2D(int rayNum) {
     bool shade; // 0 for light, 1 for shade
     int r, mx, my, mp, dof; // depth-of-field, ray multiplier
     float rx, ry, ra, xo, yo, finalDist; // ray pos, ray angle, x-offset, y-offset
+    int b2Shifter = (int) log2(mapS); // determine B2 val for rounding to nearest block
+    // set ray angles
     ra = pa - DegToRad * 30;
     if (ra < 0) ra += 2 * Pi;
     if (ra > 2 * Pi) ra -= 2 * Pi;
@@ -118,29 +130,30 @@ void drawRays2D(int rayNum) {
         float hDist = std::numeric_limits<float>::max();
         float hx = px, hy = py;
         if (ra > Pi) { // ray facing down
-            ry = (((int)py >> 6 ) << 6) - 0.0001;
+            ry = (((int)py >> b2Shifter ) << b2Shifter) - 0.0001;
             rx = (py - ry) * aTan + px;
-            yo = -64;
+            yo = -mapS;
             xo = -yo * aTan;
         }
-        if (ra < Pi) { // ray facing down
-            ry = (((int)py >> 6 ) << 6) + 64;
+        if (ra < Pi) { // ray facing up
+            ry = (((int)py >> b2Shifter) << b2Shifter) + mapS;
             rx = (py - ry) * aTan + px;
-            yo = 64;
+            yo = mapS;
             xo = -yo * aTan;
-        }
+        } 
         if (ra == 0 || ra == Pi) { // ray facing left/right
             rx = px;
             ry = py;
-            dof = 8;
+            dof = mapY;
         }
-        while(dof < 8) {
-            mx = (int)(rx) >> 6;
-            my = (int)(ry) >> 6;
+        // dof compared to mapY so enough iterations are done to hit the furthest possible wall
+        while(dof < mapY) {
+            mx = (int)(rx) >> 3;
+            my = (int)(ry) >> 3;
             mp = my * mapX + mx;
             // hit object
             if (mp > 0 && mp < mapX * mapY && map[mp] == 1) {
-                dof = 8;
+                dof = mapY;
                 hx = rx;
                 hy = ry;
                 hDist = distance(px, py, hx, hy, ra);
@@ -149,13 +162,6 @@ void drawRays2D(int rayNum) {
                 ry += yo;
                 dof += 1;
             }
-            // draw example ray
-            // glColor3f(1, 0, 0);
-            // glLineWidth(4);
-            // glBegin(GL_LINES);
-            // glVertex2i(px, py);
-            // glVertex2i(rx, ry);
-            // glEnd();
         }
 
         /* Vertical line check */
@@ -164,29 +170,30 @@ void drawRays2D(int rayNum) {
         float vDist = std::numeric_limits<float>::max();
         float vx = px, vy = py;
         if (ra > Pi2 && ra < Pi3) { // ray facing left
-            rx = (((int)px >> 6 ) << 6) - 0.0001;
+            rx = (((int)px >> b2Shifter) << b2Shifter) - 0.0001;
             ry = (px - rx) * nTan + py;
-            xo = -64;
+            xo = -mapS;
             yo = -xo * nTan;
         }
         if (ra < Pi2 || ra > Pi3) { // ray facing right
-            rx = (((int)px >> 6 ) << 6) + 64;
+            rx = (((int)px >> b2Shifter) << b2Shifter) + mapS;
             ry = (px - rx) * nTan + py;
-            xo = 64;
+            xo = mapS;
             yo = -xo * nTan;
         }
         if (ra == 0 || ra == Pi) { // ray facing up/down
             rx = px;
             ry = py;
-            dof = 8;
+            dof = mapX;
         }
-        while(dof < 8) {
-            mx = (int)(rx) >> 6;
-            my = (int)(ry) >> 6;
+        // dof compared to mapY so enough iterations are done to hit the furthest possible wall
+        while(dof < mapX) {
+            mx = (int)(rx) >> 3;
+            my = (int)(ry) >> 3;
             mp = my * mapX + mx;
             // hit object
             if (mp > 0 && mp < mapX * mapY && map[mp] == 1) {
-                dof = 8;
+                dof = mapX;
                 vx = rx;
                 vy = ry;
                 vDist = distance(px, py, vx, vy, ra);
@@ -195,13 +202,6 @@ void drawRays2D(int rayNum) {
                 ry += yo;
                 dof += 1;
             }
-            // draw example ray
-            // glColor3f(1, 0, 0);
-            // glLineWidth(2);
-            // glBegin(GL_LINES);
-            // glVertex2i(px, py);
-            // glVertex2i(rx, ry);
-            // glEnd();
         }
         // find the shorter of the two lines
         if (hDist > vDist) {
@@ -217,7 +217,7 @@ void drawRays2D(int rayNum) {
             shade = false;
             glColor3f(1, 0.7, 0);
         }
-        glLineWidth(2);
+        glLineWidth(10);
         glBegin(GL_LINES);
         glVertex2i(px, py);
         glVertex2i(rx, ry);
@@ -230,23 +230,26 @@ void drawRays2D(int rayNum) {
         // draw 3d walls
         drawWalls3D(finalDist, r, 1, shade);
         // increment next ray angle
-        ra += DegToRad / (rayNum / 60);
+        ra += DegToRad / (rayNum / 70);
         if (ra < 0) ra += 2 * Pi;
         if (ra > 2 * Pi) ra -= 2 * Pi; 
     }
 }
 
+/* Render all display elements */
 void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    drawBar2D();
     drawMap2D();
     drawPlayer();
-    drawRays2D(960);
+    drawRays2D(910);
     glutSwapBuffers();
 }
 
+/* Updates backend variables based on key states */
 void updateKeyStates() {
-    int mvmtSpd = 1;
-    if (keys[5]) mvmtSpd = 2; // l (run)
+    float mvmtSpd = 0.1; 
+    if (keys[5]) mvmtSpd *= 2; // l (run)
     if (keys[1]) { // w
         px += mvmtSpd * pdx;
         py += mvmtSpd * pdy;
@@ -256,23 +259,24 @@ void updateKeyStates() {
         py -= mvmtSpd * pdy;
     } 
     if (keys[3]) { // a
-        pa -= 0.1;
+        pa -= 0.4 * mvmtSpd;
         if (pa < 0) {
             pa += 2 * Pi;
         }
-        pdx = cos(pa) * 5;
-        pdy = sin(pa) * 5;
+        pdx = cos(pa) * ps;
+        pdy = sin(pa) * ps;
     };
     if (keys[4]) { // d
-        pa += 0.1;
+        pa += 0.4 * mvmtSpd;
         if (pa > 2 * Pi) {
             pa -= 2 * Pi;
         }
-        pdx = cos(pa) * 5;
-        pdy = sin(pa) * 5;
+        pdx = cos(pa) * ps;
+        pdy = sin(pa) * ps;
     };
 }
 
+/* Handle key holds */
 void keyDown(unsigned char key, int x, int y) {
     switch(key) {
         case 'w':
@@ -295,6 +299,7 @@ void keyDown(unsigned char key, int x, int y) {
     glutPostRedisplay();
 }
 
+/* Handle key releases */
 void keyUp(unsigned char key, int x, int y) {
     switch(key) {
         case 'w':
@@ -317,28 +322,30 @@ void keyUp(unsigned char key, int x, int y) {
     glutPostRedisplay();
 }
 
+/* Maintain variable updates in idle */
 void idle() {
     updateKeyStates();
     glutPostRedisplay();
 }
 
+/* Initialize display background and variables */
 void initDisplay() {
-    int WIDTH = 1024, HEIGHT = 512;
-    glClearColor(0.4, 0.4, 0.4, 0);
+    glClearColor(0.3, 0.3, 0.3, 0);
     gluOrtho2D(0, WIDTH, HEIGHT, 0);
-    px=300, py=300;
-    ps = 1;
+    px=75, py=75;
+    ps = 4;
     pdx = cos(pa) * ps;
     pdy = sin(pa) * ps;
 }
 
 int main(int argc, char* argv[]) {
     int WIDTH = 1024, HEIGHT = 512;
+    // Initialize application
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
     glutInitWindowSize(WIDTH, HEIGHT);
     glutCreateWindow("Sample Ray Caster");
-    
+    // Loop controls and graphics
     initDisplay();
     glutDisplayFunc(display);
     glutKeyboardFunc(keyDown);
