@@ -2,9 +2,13 @@
 #include <stdlib.h>
 #include <GL/glut.h>
 #include <math.h>
+#include <limits>
+#include <iostream>
 
 // define constants
-#define PI 3.1415926535
+#define Pi 3.1415926535
+#define Pi2 Pi / 2
+#define Pi3 3 * Pi / 2
 
 // player variables (position, change in pos, angle)
 float px, py, pdx, pdy, pa;
@@ -59,26 +63,38 @@ void drawMap2D() {
     }
 }
 
+// void logRays(int r, int mx, int my, int mp, int dof,
+//     float rx, float ry, float ra, float xo, float yo) {
+//     std::cout
+// }
+
+float distance(float ax, float ay, float bx, float by, float angle) {
+    return sqrt(pow((bx - ax), 2) + pow((by - ay), 2));
+}
+
 void drawRays3D() {
     int r, mx, my, mp, dof; // depth-of-field
     float rx, ry, ra, xo, yo; // ray pos, ray angle, x-offset, y-offset
     ra=pa;
     for (r = 0; r < 1; r++) {
+        /* Horizontal line check */
         dof = 0;
         float aTan = -1/tan(ra);
-        if (ra > PI) { // ray facing down
+        float hDist = std::numeric_limits<float>::max();
+        float hx = px, hy = py;
+        if (ra > Pi) { // ray facing down
             ry = (((int)py >> 6 ) << 6) - 0.0001;
             rx = (py - ry) * aTan + px;
             yo = -64;
             xo = -yo * aTan;
         }
-        if (ra < PI) { // ray facing down
+        if (ra < Pi) { // ray facing down
             ry = (((int)py >> 6 ) << 6) + 64;
             rx = (py - ry) * aTan + px;
             yo = 64;
             xo = -yo * aTan;
         }
-        if (ra == 0 || ra == PI) { // ray facing left/right
+        if (ra == 0 || ra == Pi) { // ray facing left/right
             rx = px;
             ry = py;
             dof = 8;
@@ -87,19 +103,86 @@ void drawRays3D() {
             mx = (int)(rx) >> 6;
             my = (int)(ry) >> 6;
             mp = my * mapX + mx;
-            if (mp < mapX * mapY && map[mp] == 1) {
+            // hit object
+            if (mp > 0 && mp < mapX * mapY && map[mp] == 1) {
                 dof = 8;
+                hx = rx;
+                hy = ry;
+                hDist = distance(px, py, hx, hy, ra);
             } else {
                 rx += xo;
                 ry += yo;
                 dof += 1;
             }
-            glColor3f(0, 1, 0);
-            glLineWidth(1);
+            // draw example ray
+            // glColor3f(1, 0, 0);
+            // glLineWidth(4);
+            // glBegin(GL_LINES);
+            // glVertex2i(px, py);
+            // glVertex2i(rx, ry);
+            // glEnd();
+        }
+
+        /* Vertical line check */
+        dof = 0;
+        float nTan = -tan(ra);
+        float vDist = std::numeric_limits<float>::max();
+        float vx = px, vy = py;
+        if (ra > Pi2 && ra < Pi3) { // ray facing left
+            rx = (((int)px >> 6 ) << 6) - 0.0001;
+            ry = (px - rx) * nTan + py;
+            xo = -64;
+            yo = -xo * nTan;
+        }
+        if (ra < Pi2 || ra > Pi3) { // ray facing right
+            rx = (((int)px >> 6 ) << 6) + 64;
+            ry = (px - rx) * nTan + py;
+            xo = 64;
+            yo = -xo * nTan;
+        }
+        if (ra == 0 || ra == Pi) { // ray facing up/down
+            rx = px;
+            ry = py;
+            dof = 8;
+        }
+        while(dof < 8) {
+            mx = (int)(rx) >> 6;
+            my = (int)(ry) >> 6;
+            mp = my * mapX + mx;
+            // hit object
+            if (mp > 0 && mp < mapX * mapY && map[mp] == 1) {
+                dof = 8;
+                vx = rx;
+                vy = ry;
+                vDist = distance(px, py, vx, vy, ra);
+            } else {
+                rx += xo;
+                ry += yo;
+                dof += 1;
+            }
+            // draw example ray
+            glColor3f(1, 0, 0);
+            glLineWidth(2);
             glBegin(GL_LINES);
             glVertex2i(px, py);
             glVertex2i(rx, ry);
             glEnd();
+
+            // find the shorter of the two lines
+            if (hDist > vDist) {
+                rx = vx;
+                ry = vy;
+            } if (hDist < vDist) {
+                rx = hx;
+                ry = hy;
+            }
+            std::cout << hDist << ", " << vDist << "\n";
+            // glColor3f(0, 1, 0);
+            // glLineWidth(2);
+            // glBegin(GL_LINES);
+            // glVertex2i(px, py);
+            // glVertex2i(rx, ry);
+            // glEnd();
         }
     }
 }
@@ -113,28 +196,28 @@ void display() {
 }
 
 void updateKeyStates() {
-    int mvmtSpd = 5;
-    if (keys[5]) mvmtSpd = 10; // l (run)
+    int mvmtSpd = 1;
+    if (keys[5]) mvmtSpd = 2; // l (run)
     if (keys[1]) { // w
-        px += pdx;
-        py += pdy;
+        px += mvmtSpd * pdx;
+        py += mvmtSpd * pdy;
     }
     if (keys[2]) { // s
-        px -= pdx;
-        py -= pdy;
+        px -= mvmtSpd * pdx;
+        py -= mvmtSpd * pdy;
     } 
     if (keys[3]) { // a
         pa -= 0.1;
         if (pa < 0) {
-            pa += 2 * PI;
+            pa += 2 * Pi;
         }
         pdx = cos(pa) * 5;
         pdy = sin(pa) * 5;
     };
     if (keys[4]) { // d
         pa += 0.1;
-        if (pa > 2 * PI) {
-            pa -= 2 * PI;
+        if (pa > 2 * Pi) {
+            pa -= 2 * Pi;
         }
         pdx = cos(pa) * 5;
         pdy = sin(pa) * 5;
