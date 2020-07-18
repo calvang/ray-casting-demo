@@ -9,6 +9,7 @@
 #define Pi 3.1415926535
 #define Pi2 Pi / 2
 #define Pi3 3 * Pi / 2
+#define DegToRad 0.0174533
 
 // player variables (position, change in pos, angle)
 float px, py, pdx, pdy, pa;
@@ -42,6 +43,10 @@ int map[] = {
     1, 1, 1, 1, 1, 1, 1, 1
 };
 
+float distance(float ax, float ay, float bx, float by, float angle) {
+    return sqrt(pow((bx - ax), 2) + pow((by - ay), 2));
+}
+
 void drawMap2D() {
     int x, y, x0, y0;
     for (y = 0; y < mapY; y++) {
@@ -63,20 +68,26 @@ void drawMap2D() {
     }
 }
 
-// void logRays(int r, int mx, int my, int mp, int dof,
-//     float rx, float ry, float ra, float xo, float yo) {
-//     std::cout
-// }
-
-float distance(float ax, float ay, float bx, float by, float angle) {
-    return sqrt(pow((bx - ax), 2) + pow((by - ay), 2));
+void drawWalls3D(float finalDist, int rayNum, int wallDetail) {
+    float lineHeight = mapS * 320 / finalDist;
+    if (lineHeight > 320) {
+        lineHeight = 320;
+    }
+    float lineOffset = 160 - lineHeight / 2;
+    glLineWidth(8);
+    glBegin(GL_LINES);
+    glVertex2i(rayNum * wallDetail + 530, lineOffset);
+    glVertex2i(rayNum * wallDetail + 530, lineHeight + lineOffset);
+    glEnd();
 }
 
-void drawRays3D() {
-    int r, mx, my, mp, dof; // depth-of-field
-    float rx, ry, ra, xo, yo; // ray pos, ray angle, x-offset, y-offset
-    ra=pa;
-    for (r = 0; r < 1; r++) {
+void drawRays2D(int rayNum) {
+    int r, mx, my, mp, dof; // depth-of-field, ray multiplier
+    float rx, ry, ra, xo, yo, finalDist; // ray pos, ray angle, x-offset, y-offset
+    ra = pa - DegToRad * 30;
+    if (ra < 0) ra += 2 * Pi;
+    if (ra > 2 * Pi) ra -= 2 * Pi;
+    for (r = 0; r < rayNum; r++) {
         /* Horizontal line check */
         dof = 0;
         float aTan = -1/tan(ra);
@@ -161,29 +172,41 @@ void drawRays3D() {
                 dof += 1;
             }
             // draw example ray
-            glColor3f(1, 0, 0);
-            glLineWidth(2);
-            glBegin(GL_LINES);
-            glVertex2i(px, py);
-            glVertex2i(rx, ry);
-            glEnd();
-
-            // find the shorter of the two lines
-            if (hDist > vDist) {
-                rx = vx;
-                ry = vy;
-            } if (hDist < vDist) {
-                rx = hx;
-                ry = hy;
-            }
-            std::cout << hDist << ", " << vDist << "\n";
-            // glColor3f(0, 1, 0);
+            // glColor3f(1, 0, 0);
             // glLineWidth(2);
             // glBegin(GL_LINES);
             // glVertex2i(px, py);
             // glVertex2i(rx, ry);
             // glEnd();
         }
+        // find the shorter of the two lines
+        if (hDist > vDist) {
+            rx = vx;
+            ry = vy;
+            finalDist = vDist;
+            glColor3f(1, 0.9, 0);
+        } if (hDist < vDist) {
+            rx = hx;
+            ry = hy;
+            finalDist = hDist;
+            glColor3f(1, 0.7, 0);
+        }
+        glLineWidth(2);
+        glBegin(GL_LINES);
+        glVertex2i(px, py);
+        glVertex2i(rx, ry);
+        glEnd();
+        // remedy fisheye effect
+        float ca = pa - ra;
+        if (ca < 0) ca += 2 * Pi;
+        if (ca > 2 * Pi) ca -= 2 * Pi; 
+        finalDist *= cos(ca);
+        // draw 3d walls
+        drawWalls3D(finalDist, r, 1);
+        // increment next ray angle
+        ra += DegToRad / (rayNum / 60);
+        if (ra < 0) ra += 2 * Pi;
+        if (ra > 2 * Pi) ra -= 2 * Pi; 
     }
 }
 
@@ -191,7 +214,7 @@ void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     drawMap2D();
     drawPlayer();
-    drawRays3D();
+    drawRays2D(960);
     glutSwapBuffers();
 }
 
