@@ -13,7 +13,7 @@ The direction keys are mapped to the WASD format (A and D are for turning), and 
 
 To build from the source code, run:
  `cd c++ && make maze; ./maze`
-Or simple build the executable:
+Or simple run the executable:
 `./maze`
 
 Similarly, `sample.cpp` and `sampleLarge.cpp` can be built or run for testing.
