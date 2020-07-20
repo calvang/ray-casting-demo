@@ -1,3 +1,5 @@
+[![Run on Repl.it](https://repl.it/badge/github/calvang/ray-casting-demo)](https://repl.it/github/calvang/ray-casting-demo)
+
 # Ray Casting Demo
   
 A simple maze demo utilizing ray casting. The desktop application uses OpenGL and C++ while the web application utilizes WebGL and Typescript. This was inspired by 
